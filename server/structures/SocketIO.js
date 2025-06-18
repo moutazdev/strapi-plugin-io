@@ -1,6 +1,8 @@
 'use strict';
 
 const { Server } = require('socket.io');
+const { createAdapter } = require("@socket.io/cluster-adapter");
+const { setupWorker } = require("@socket.io/sticky");
 const { handshake } = require('../middleware');
 const { getService } = require('../utils/getService');
 const { pluginId } = require('../utils/pluginId');
@@ -12,6 +14,8 @@ class SocketIO {
 		const { hooks } = strapi.config.get(`plugin.${pluginId}`);
 		hooks.init?.({ strapi, $io: this });
 		this._socket.use(handshake);
+		this._socket.adapter(createAdapter());
+		setupWorker(this._socket);
 	}
 
 	// eslint-disable-next-line no-unused-vars
