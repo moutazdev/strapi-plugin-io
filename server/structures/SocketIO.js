@@ -15,6 +15,9 @@ class SocketIO {
 		hooks.init?.({ strapi, $io: this });
 		this._socket.use(handshake);
 		this._socket.adapter(createAdapter());
+		setupMaster(strapi.server.httpServer, {
+			loadBalancingMethod: "least-connection"
+		});
 		setupWorker(this._socket);
 	}
 
