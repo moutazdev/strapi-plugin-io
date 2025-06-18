@@ -15,6 +15,7 @@ class SocketIO {
 		hooks.init?.({ strapi, $io: this });
 		this._socket.use(handshake);
 		this._socket.adapter(createAdapter());
+		console.log('SocketIO: Using cluster adapter for socket.io');
 		setupMaster(strapi.server.httpServer, {
 			loadBalancingMethod: "least-connection"
 		});
