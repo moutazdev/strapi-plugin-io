@@ -15,11 +15,14 @@ class SocketIO {
 		hooks.init?.({ strapi, $io: this });
 		this._socket.use(handshake);
 		this._socket.adapter(createAdapter());
-		console.log('SocketIO: Using cluster adapter for socket.io');
-		setupMaster(strapi.server.httpServer, {
-			loadBalancingMethod: "least-connection"
-		});
+		console.log('SocketIO: Using cluster adapter for socket.io 2');
+		console.log('this._socket', this._socket);
+		// setupMaster(strapi.server.httpServer, {
+		// 	loadBalancingMethod: "least-connection"
+		// });
+		console.log('this._socket2', this._socket);
 		setupWorker(this._socket);
+		console.log('this._socket3', this._socket);
 	}
 
 	// eslint-disable-next-line no-unused-vars
