@@ -1,5 +1,6 @@
 'use strict';
 
+const cluster = require('cluster');
 const { Server } = require('socket.io');
 const { createAdapter } = require("@socket.io/cluster-adapter");
 const { setupWorker } = require("@socket.io/sticky");
@@ -9,21 +10,63 @@ const { pluginId } = require('../utils/pluginId');
 const { API_TOKEN_TYPE } = require('../utils/constants');
 
 class SocketIO {
-	constructor(options) {
-		this._socket = new Server(strapi.server.httpServer, options);
-		const { hooks } = strapi.config.get(`plugin.${pluginId}`);
-		hooks.init?.({ strapi, $io: this });
-		this._socket.use(handshake);
-		this._socket.adapter(createAdapter());
-		console.log('SocketIO: Using cluster adapter for socket.io 2');
-		console.log('this._socket', this._socket);
-		// setupMaster(strapi.server.httpServer, {
-		// 	loadBalancingMethod: "least-connection"
-		// });
-		console.log('this._socket2', this._socket);
-		setupWorker(this._socket);
-		console.log('this._socket3', this._socket);
-	}
+  constructor(options) {
+    this._socket = new Server(strapi.server.httpServer, options);
+    const { hooks } = strapi.config.get(`plugin.${pluginId}`);
+    hooks.init?.({ strapi, $io: this });
+    this._socket.use(handshake);
+
+    // Environment-based adapter setup
+    if (process.env.NODE_ENV === 'production') {
+      this._setupRedisAdapter();
+    } else {
+      this._setupDevelopmentAdapter();
+    }
+  }
+
+  _setupRedisAdapter() {
+    try {
+      const { createAdapter } = require('@socket.io/redis-adapter');
+      const { createClient } = require('redis');
+      
+      const pubClient = createClient({
+        url: process.env.REDIS_URL || 'redis://localhost:6379'
+      });
+      const subClient = pubClient.duplicate();
+
+      Promise.all([pubClient.connect(), subClient.connect()])
+        .then(() => {
+          this._socket.adapter(createAdapter(pubClient, subClient));
+          strapi.log.info('Socket.IO: Redis adapter connected');
+        })
+        .catch(err => {
+          strapi.log.error('Socket.IO: Redis connection failed', err);
+          this._fallbackToLocalAdapter();
+        });
+
+    } catch (err) {
+      strapi.log.error('Socket.IO: Redis dependencies missing', err);
+      this._fallbackToLocalAdapter();
+    }
+  }
+
+  _setupDevelopmentAdapter() {
+    try {
+      const { createAdapter } = require('@socket.io/cluster-adapter');
+      this._socket.adapter(createAdapter());
+      strapi.log.info('Socket.IO: Using development cluster adapter');
+    } catch (err) {
+      strapi.log.warn('Socket.IO: Running without cluster adapter');
+      // Runs in single-process mode
+    }
+  }
+
+  _fallbackToLocalAdapter() {
+    strapi.log.warn('Socket.IO: Falling back to local adapter');
+    // Will work for single PM2 instance but won't scale
+    this._socket.adapter(createAdapter());
+  }
+
 
 	// eslint-disable-next-line no-unused-vars
 	async emit({ event, schema, data: rawData }) {
