@@ -21,7 +21,6 @@ class SocketIO {
 				allowEIO3: true, 
 				pingTimeout: 30000, 
 				pingInterval: 25000,
-				transports: ['websocket', 'polling'],
 			};
 		}
 	}
