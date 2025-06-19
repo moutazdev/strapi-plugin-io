@@ -36,7 +36,8 @@ class SocketIO {
 
       Promise.all([pubClient.connect(), subClient.connect()])
         .then(() => {
-          this._socket.adapter(createAdapter(pubClient, subClient));
+          this._socket.adapter(createShardedAdapter(pubClient, subClient),
+		);
           strapi.log.info('Socket.IO: Redis adapter connected');
         })
         .catch(err => {
