@@ -1,7 +1,7 @@
 'use strict';
 
 const { Server } = require('socket.io');
-const { createShardedAdapter } = require("@socket.io/cluster-adapter");
+const { createAdapter } = require('@socket.io/redis-adapter');
 const { handshake } = require('../middleware');
 const { getService } = require('../utils/getService');
 const { pluginId } = require('../utils/pluginId');
@@ -17,7 +17,7 @@ class SocketIO {
 					maxDisconnectionDuration: 5 * 60 * 1000, // 5 minutes
 					skipMiddlewares: true,
 				},
-				transports: ['websocket', 'polling'],
+				transports: ['websocket'],
 				allowEIO3: true,
 				pingTimeout: 30000,
 				pingInterval: 25000,
@@ -47,7 +47,7 @@ class SocketIO {
 
 			Promise.all([pubClient.connect(), subClient.connect()])
 				.then(() => {
-					this._socket.adapter(createShardedAdapter(pubClient, subClient),
+					this._socket.adapter(createAdapter(pubClient, subClient),
 					);
 					strapi.log.info('Socket.IO: Redis adapter connected');
 				})
