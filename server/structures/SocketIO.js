@@ -45,6 +45,14 @@ class SocketIO {
 			});
 			const subClient = pubClient.duplicate();
 
+			pubClient.on('error', (err) => {
+				strapi.log.error('Redis pubClient error:', err);
+			});
+
+			subClient.on('error', (err) => {
+				strapi.log.error('Redis subClient error:', err);
+			});
+
 			Promise.all([pubClient.connect(), subClient.connect()])
 				.then(() => {
 					this._socket.adapter(createAdapter(pubClient, subClient),
