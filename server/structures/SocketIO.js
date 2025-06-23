@@ -26,7 +26,7 @@ class SocketIO {
 		this._socket = new Server(strapi.server.httpServer, finalOptions);
 		const { hooks } = strapi.config.get(`plugin.${pluginId}`);
 		hooks.init?.({ strapi, $io: this });
-		this._socket.use(handshake);
+		// this._socket.use(handshake);
 
 		// Environment-based adapter setup
 		if (process.env.NODE_ENV === 'production') {
